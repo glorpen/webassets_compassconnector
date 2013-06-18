@@ -1,0 +1,8 @@
+syntax: regexp
+^\.project$
+^\.pydevproject$
+^\.settings$
+^env$
+^.*/__pycache__$
+^src/webassets_cc/tests/out/\..*$
+^.*\.egg-info$
