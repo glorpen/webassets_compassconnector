@@ -8,26 +8,31 @@ Created on 11-05-2013
 from webassets.filter import Filter, option
 from webassets.exceptions import FilterError
 from webassets_cc import connector
+from webassets.utils import hash_func
 
 class CompassConnectorFilter(Filter):
-	name = 'compassconnector'
-	max_debug_level = None
+    name = 'compassconnector'
+    max_debug_level = None
 
-	options = {
-		'compass': ('binary', 'COMPASS_BIN'),
-		'plugins': option('COMPASS_PLUGINS', type=list),
-		'config': 'COMPASS_CONFIG',
-	}
-	
-	depends = None
-	
-	def find_dependencies(self):
-		return self.depends
-	
-	def output(self, _in, out, **kwargs):
-		h = connector.Handler(self.env, _in, out, self.plugins if self.plugins else {})
-		if not self.compass:
-			raise FilterError("Compass bin path is not set")
-		h.start(self.compass)
-		
-		self.depends = h.deps
+    options = {
+        'compass': ('binary', 'COMPASS_BIN'),
+        'plugins': option('COMPASS_PLUGINS', type=list),
+        'vendor_path': ('relative path', 'VENDOR_PATH'),
+    }
+    
+    depends = None
+    
+    def find_dependencies(self):
+        return self.depends
+
+    def unique(self):
+        hash_func(self.plugins)
+
+    def output(self, in_, out, **kwargs):
+        h = connector.Handler(self.env, in_, out, self.plugins if self.plugins else {})
+        h.vendor_path = self.vendor_path
+        if not self.compass:
+            raise FilterError("Compass bin path is not set")
+        h.start(self.compass)
+        
+        self.depends = h.deps

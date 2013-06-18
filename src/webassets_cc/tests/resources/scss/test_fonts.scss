@@ -1,11 +1,11 @@
 @import "compass/css3/font-face";
 
 font-face-vendor {
-    @include font-face("this name", font-files("this.woff", woff, "this.otf", opentype), "this.eot");
+    @include font-face("this name", font-files("vendor_empty.ttf", woff, "vendor_empty.ttf", opentype), "vendor_empty.ttf");
 }
 
 font-face-app {
-    @include font-face("this name", font-files("@fonts/this.woff", woff, "@fonts/this.otf", opentype), "@fonts/this.eot");
+    @include font-face("this name", font-files("@fonts/empty.ttf", woff, "@fonts/empty.ttf", opentype), "@fonts/empty.ttf");
 }
 font-face-absolute {
   @include font-face("this name", font-files("/this.woff", woff, "/this.otf", opentype), "/this.eot");

@@ -6,3 +6,5 @@ syntax: regexp
 ^.*/__pycache__$
 ^src/webassets_cc/tests/out/\..*$
 ^.*\.egg-info$
+^src/webassets_cc/tests/out/generated-images/sprites$
+^src/webassets_cc/tests/out/generated-images/vendor-something-.*$

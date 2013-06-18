@@ -12,27 +12,6 @@ import time
 import types
 import logging
 
-re_schema = re.compile(r'^(([a-z0-9]+://)|(//))')
-re_app = re.compile(r'^@.*$')
-
-def resolve_url(fun):
-    def decorator(self, *args, **kwargs):
-        ret = fun(self, *args, **kwargs)
-        
-        if not re_schema.match(ret) is None:
-            return ret
-        
-        rel_path = ret.lstrip("/@")
-        parts = rel_path.split("?",1)
-        #parts[0] could be asset spec
-        p = self.env.resolver.search_for_source(parts[0])
-        p = realpath(p[0] if isinstance(p, list) else p)
-        url = self.env.resolver.resolve_source_to_url(p, parts[0])
-        parts[0] = url
-        return "?".join(parts)
-        
-    return decorator
-
 class Handler(object):
     
     INITIAL_FILE = "python::stdin.%s"
@@ -40,8 +19,12 @@ class Handler(object):
     initial_scss = INITIAL_FILE % "scss"
     initial_css = INITIAL_FILE % "css"
     
-    vendor_path = None # /disk/path/to/dir/
-    vendor_prefix = "/vendors" #http:// ....
+    vendor_path = "vendor" # prefix webasset vendor dir
+    vendor_dirs = {
+        "font": "fonts",
+        "image": "images",
+    }
+    generated_dir = "generated-images"
     
     api_version = 2
     
@@ -73,13 +56,23 @@ class Handler(object):
     def file_to_dict(self, filepath, data, mtime=None):
         return {"mtime":mtime if mtime else os.path.getmtime(filepath), "data": base64.encodebytes(data).decode(), "hash": hashlib.md5(filepath.encode()).hexdigest(), "ext": os.path.splitext(filepath)[1][1:]}
     
-    def filepath_to_dict(self, filepath):
-        filepath = os.path.realpath(filepath)
-        if not exists(filepath):
-            return None
+    def get_path(self, path, is_vendor, type_=None):
         
+        if type_ == "generated_image":
+            return self.env.resolver.resolve_output_to_path("/".join([self.generated_dir, path]), None)
+        else:
+            filepath = "/".join([self.vendor_path, self.vendor_dirs[type_], path]) if is_vendor else path
+            try:
+                return self.env.resolver.search_for_source(filepath)[0]
+            except OSError:
+                return None
+    
+    def filepath_to_dict(self, filepath, is_vendor=False, type_=None):
+        filepath = self.get_path(filepath, is_vendor, type_)
         self.deps.add(filepath)
         
+        if filepath is None or not os.path.exists(filepath):
+            return None
         with open(filepath,"rb") as file:
             return self.file_to_dict(filepath, file.read())
     
@@ -89,15 +82,33 @@ class Handler(object):
         if path == self.initial_css:
             return None
         
-        raise NotImplementedError()
+        return self.filepath_to_dict(path, mode == "vendor", type_)
     
     def put_file(self, path, type_, data, mode):
-        data = base64.decodebytes(data.encode()).decode()
+        if not isinstance(data, bytes):
+            data = data.encode()
+        data = base64.decodebytes(data)
         
         if path == self.initial_css:
-            self.output.write(data)
+            self.output.write(data.decode())
         else:
-            raise NotImplementedError()
+            p = self.get_path(path, mode=="vendor", type_)
+            self.logger.info("Writting to file %s", p)
+            os.makedirs(dirname(p), 0o777, True)
+            with open(p, "wb") as f:
+                f.write(data)
+    
+    def get_url(self, path, type_, mode):
+        is_vendor = mode == "vendor"
+        
+        parts = path.split("?",1)
+        p = self.get_path(parts[0], is_vendor, type_)
+        if p is None:
+            raise Exception("Source %s not found" % parts[0]);
+        
+        parts[0] = self.env.resolver.resolve_source_to_url(p, None)
+        return "?".join(parts)
+        
     
     """
     def get_url(self, path, type_, mode):
@@ -135,9 +146,12 @@ class Handler(object):
             f.write(base64.decodebytes(data.encode()))
         return True
     """
-    def find_sprites_matching(self, path):
+    def find_sprites_matching(self, path, mode):
+        if mode == "vendor":
+            path = "/".join([self.vendor_path, self.vendor_dirs["image"], path])
+        
         r = re.compile(r'^.*?('+path.replace("*", ".*")+')$')
-        return [r.match(p).group(1) for p in self.env.resolver.search_for_source(path.lstrip("/"))]
+        return ["@"+r.match(p).group(1) for p in self.env.resolver.search_for_source(path.lstrip("/"))]
     
     def run(self, proc):
         decoder = json.JSONDecoder()
