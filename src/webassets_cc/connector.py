@@ -109,43 +109,6 @@ class Handler(object):
         parts[0] = self.env.resolver.resolve_source_to_url(p, None)
         return "?".join(parts)
         
-    
-    """
-    def get_url(self, path, type_, mode):
-        return self.env.resolver.resolve_source_to_url(self.env.resolver.search_for_source(path))
-    
-    def get_file(self, path, type_, vendor):
-        path = path.lstrip("/@")
-        
-        if type_ == "out_stylesheet": return None #input is from stdin
-        
-        if type_ in ("generated_image",):
-            f = join(self.get_generated_images_root(), path)
-        else:
-            if vendor:
-                f = self.env.resolver.search_for_source(self.vendors_path.lstrip("/")+"/"+type_+"s/"+path)
-            else:
-                f = self.env.resolver.search_for_source(path)
-        
-        f = f[0] if isinstance(f, list) else f
-        
-        return self.file_to_dict(f)
-    
-    def put_file(self, path, type_, data):
-        
-        if type_  == "sprite":
-            p = join(self.get_generated_images_root(), path.lstrip("/"))
-        elif type_  == "css":
-            self.output.write(base64.decodebytes(data.encode()).decode())
-            return True
-        else:
-            raise NotImplementedError(path, type_)
-        
-        os.makedirs(dirname(p), 0o777, True)
-        with open(p,"wb") as f:
-            f.write(base64.decodebytes(data.encode()))
-        return True
-    """
     def find_sprites_matching(self, path, mode):
         if mode == "vendor":
             path = "/".join([self.vendor_path, self.vendor_dirs["image"], path])
