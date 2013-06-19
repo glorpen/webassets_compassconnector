@@ -31,7 +31,7 @@ Virtual Paths
 
 There are three kind of "paths":
 
-- app: looks like ``@public/images/asset.png``
+- app, starts with an ``@`` and may look like ``@public/images/asset.png``
 - vendor: a relative path, should be used only by compass plugins (eg. zurb-foundation, blueprint)
 - absolute path: starts with ``/``, ``http://`` etc. and will NOT be changed by connector
 
