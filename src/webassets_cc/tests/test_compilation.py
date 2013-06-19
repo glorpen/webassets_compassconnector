@@ -17,6 +17,8 @@ class TestCompilation(unittest.TestCase):
     def setUp(self):
         res = dirname(__file__)+'/resources/'
         self.env = Environment(dirname(__file__)+"/out", '/media-prefix')
+        self.env.cache = False
+        self.env.manifest = False
         
         self.env.append_path(res+"assets", "/")
         self.env.append_path(res+"vendor", "/vendors")

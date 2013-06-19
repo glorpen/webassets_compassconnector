@@ -63,13 +63,16 @@ class Handler(object):
         else:
             filepath = "/".join([self.vendor_path, self.vendor_dirs[type_], path]) if is_vendor else path
             try:
-                return self.env.resolver.search_for_source(filepath)[0]
+                ret = self.env.resolver.search_for_source(filepath)
+                return ret[0] if isinstance(ret, list) else ret
             except OSError:
                 return None
     
     def filepath_to_dict(self, filepath, is_vendor=False, type_=None):
         filepath = self.get_path(filepath, is_vendor, type_)
         self.deps.add(filepath)
+        
+        self.logger.debug("Trying path %s", filepath)
         
         if filepath is None or not os.path.exists(filepath):
             return None
