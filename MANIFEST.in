@@ -1,0 +1,2 @@
+recursive-include src/webassets_cc/tests/resources *
+include src/webassets_cc/tests/out/generated-images/1x1.png
