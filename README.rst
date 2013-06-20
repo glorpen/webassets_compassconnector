@@ -2,7 +2,12 @@
 Webassets CompassConnector
 ==========================
 
-Seamless integration with Compass for Python apps.
+Seamless integration with Compass for Python3 apps.
+
+For full blown experience you have to use webassets with patches from https://github.com/miracle2k/webassets/pull/240 and https://github.com/miracle2k/webassets/pull/241 .
+Especially if you're using Python3.3. Alternatively you can install webassets fork from https://github.com/glorpen/webassets (branch ``mymaster``).
+
+Using unpatched version can result in bad dependency traacking (parent asset may not compile even if child has changed).
 
 What problems is it solving?
 ============================

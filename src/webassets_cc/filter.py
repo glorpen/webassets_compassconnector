@@ -8,7 +8,11 @@ Created on 11-05-2013
 from webassets.filter import Filter, option
 from webassets.exceptions import FilterError
 from webassets_cc import connector
-from webassets.utils import hash_func
+
+try:
+    from webassets.utils import hash_func
+except ImportError:
+    from webassets.cache import make_md5 as hash_func
 
 class CompassConnectorFilter(Filter):
     name = 'compassconnector'
