@@ -5,14 +5,20 @@
 @author: Arkadiusz Dzięgiel
 """
 
-from os.path import dirname,realpath,exists,join
-import os, sys, re, base64, hashlib, json
+from os.path import dirname
+import os, re, base64, hashlib, json
 import subprocess
 import time
 import types
 import logging
 
 class Handler(object):
+    
+    TYPE_GENERATED_IMAGE = 'generated_image'
+    
+    MODE_ABSOLUTE = 'absolute'
+    MODE_APP = 'app'
+    MODE_VENDOR = 'vendor'
     
     INITIAL_FILE = "python::stdin.%s"
     
@@ -26,9 +32,9 @@ class Handler(object):
     }
     generated_dir = "generated-images"
     
-    api_version = 2
+    api_version = 3
     
-    def __init__(self, env, in_, out, plugins=[]):
+    def __init__(self, env, in_, out, plugins=[], source=None):
         
         self.env = env
         self.plugins = plugins
@@ -37,6 +43,7 @@ class Handler(object):
         
         self.input = in_.getvalue().encode()
         self.output = out
+        self.source = source
         
         self.deps = set()
     
@@ -56,20 +63,23 @@ class Handler(object):
     def file_to_dict(self, filepath, data, mtime=None):
         return {"mtime":mtime if mtime else os.path.getmtime(filepath), "data": base64.encodebytes(data).decode(), "hash": hashlib.md5(filepath.encode()).hexdigest(), "ext": os.path.splitext(filepath)[1][1:]}
     
-    def get_path(self, path, is_vendor, type_=None):
+    def get_path(self, path, mode, type_=None):
         
-        if type_ == "generated_image":
-            return self.env.resolver.resolve_output_to_path("/".join([self.generated_dir, path]), None)
+        if mode == self.MODE_ABSOLUTE:
+            raise ValueError("Resolving url absolute paths is not supported")
+        
+        if type_ == self.TYPE_GENERATED_IMAGE:
+            return self.env.resolver.resolve_output_to_path("/".join([self.generated_dir, path]), self.source)
         else:
-            filepath = "/".join([self.vendor_path, self.vendor_dirs[type_], path]) if is_vendor else path
+            filepath = "/".join([self.vendor_path, self.vendor_dirs[type_], path]) if mode == self.MODE_VENDOR else path
             try:
                 ret = self.env.resolver.search_for_source(filepath)
                 return ret[0] if isinstance(ret, list) else ret
             except OSError:
                 return None
     
-    def filepath_to_dict(self, filepath, is_vendor=False, type_=None):
-        filepath = self.get_path(filepath, is_vendor, type_)
+    def filepath_to_dict(self, filepath, mode, type_=None):
+        filepath = self.get_path(filepath, mode, type_)
         self.deps.add(filepath)
         
         self.logger.debug("Trying path %s", filepath)
@@ -85,7 +95,7 @@ class Handler(object):
         if path == self.initial_css:
             return None
         
-        return self.filepath_to_dict(path, mode == "vendor", type_)
+        return self.filepath_to_dict(path, mode, type_)
     
     def put_file(self, path, type_, data, mode):
         if not isinstance(data, bytes):
@@ -95,25 +105,27 @@ class Handler(object):
         if path == self.initial_css:
             self.output.write(data.decode())
         else:
-            p = self.get_path(path, mode=="vendor", type_)
+            p = self.get_path(path, mode, type_)
             self.logger.info("Writting to file %s", p)
             os.makedirs(dirname(p), 0o777, True)
             with open(p, "wb") as f:
                 f.write(data)
     
     def get_url(self, path, type_, mode):
-        is_vendor = mode == "vendor"
+        
+        if mode == self.MODE_ABSOLUTE:
+            return path
         
         parts = path.split("?",1)
-        p = self.get_path(parts[0], is_vendor, type_)
+        p = self.get_path(parts[0], mode, type_)
         if p is None:
             raise Exception("Source %s not found" % parts[0]);
         
-        parts[0] = self.env.resolver.resolve_source_to_url(p, None)
+        parts[0] = self.env.resolver.resolve_source_to_url(p, self.source)
         return "?".join(parts)
         
     def find_sprites_matching(self, path, mode):
-        if mode == "vendor":
+        if mode == self.MODE_VENDOR:
             path = "/".join([self.vendor_path, self.vendor_dirs["image"], path])
         
         r = re.compile(r'^.*?('+path.replace("*", ".*")+')$')

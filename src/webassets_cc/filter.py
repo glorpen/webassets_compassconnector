@@ -32,8 +32,8 @@ class CompassConnectorFilter(Filter):
     def unique(self):
         hash_func(self.plugins)
 
-    def output(self, in_, out, **kwargs):
-        h = connector.Handler(self.env, in_, out, self.plugins if self.plugins else {})
+    def input(self, in_, out, **kwargs):
+        h = connector.Handler(self.env, in_, out, self.plugins if self.plugins else {}, kwargs["source"])
         h.vendor_path = self.vendor_path
         if not self.compass:
             raise FilterError("Compass bin path is not set")
