@@ -71,3 +71,25 @@ Standalone example:
    env.append_path("/some/path/vendors", "/vendors")
    
    scss = Bundle('scss/my.scss', filters=CompassConnectorFilter, output='my.css')
+   
+With Webassets, Pyramid and Jinja2:
+
+.. sourcecode:: python
+
+   config = Configurator()
+   config.include('pyramid_jinja2')
+   
+   config.add_settings({"webassets.base_dir": join(root_dir, "cache", "assets"),"webassets.base_url":"/static"})
+   config.include('pyramid_webassets')
+   
+   config.add_route('show', '/')
+   config.add_static_view(name='static', path=join(root_dir, "cache", "assets"))
+   
+   scss = Bundle('package:resources/assets/app.scss', filters=CompassConnectorFilter, output='app.css')
+   config.add_webasset('styles', scss)
+   
+   config.add_jinja2_extension('webassets.ext.jinja2.AssetsExtension')
+   assets_env = config.get_webassets_env()
+   assets_env.config["compass_bin"] = "/home/user/.gem/ruby/1.9.1/bin/compass"
+   assets_env.config["compass_plugins"] = {"zurb-foundation":">4"}
+   config.get_jinja2_environment().assets_environment = assets_env

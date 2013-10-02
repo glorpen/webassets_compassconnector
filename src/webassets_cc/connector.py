@@ -80,12 +80,13 @@ class Handler(object):
     
     def filepath_to_dict(self, filepath, mode, type_=None):
         filepath = self.get_path(filepath, mode, type_)
-        self.deps.add(filepath)
         
         self.logger.debug("Trying path %s", filepath)
         
         if filepath is None or not os.path.exists(filepath):
             return None
+        
+        self.deps.add(filepath)
         with open(filepath,"rb") as file:
             return self.file_to_dict(filepath, file.read())
     
