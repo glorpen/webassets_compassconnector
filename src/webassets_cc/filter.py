@@ -22,6 +22,7 @@ class CompassConnectorFilter(Filter):
         'compass': ('binary', 'COMPASS_BIN'),
         'plugins': option('COMPASS_PLUGINS', type=list),
         'vendor_path': ('relative path', 'VENDOR_PATH'),
+        'imports': option('COMPASS_IMPORTS', type=list),
     }
     
     depends = None
@@ -33,7 +34,7 @@ class CompassConnectorFilter(Filter):
         hash_func(self.plugins)
 
     def input(self, in_, out, **kwargs):
-        h = connector.Handler(self.env, in_, out, self.plugins if self.plugins else {}, kwargs["source"])
+        h = connector.Handler(self.env, in_, out, self.plugins if self.plugins else {}, self.imports if self.imports else [], kwargs["source"])
         h.vendor_path = self.vendor_path
         if not self.compass:
             raise FilterError("Compass bin path is not set")

@@ -32,12 +32,13 @@ class Handler(object):
     }
     generated_dir = "generated-images"
     
-    api_version = 3
+    api_version = 4
     
-    def __init__(self, env, in_, out, plugins=[], source=None):
+    def __init__(self, env, in_, out, plugins=[], imports=[], source=None):
         
         self.env = env
         self.plugins = plugins
+        self.imports = imports
         
         self.logger = logging.getLogger(__name__)
         
@@ -56,7 +57,8 @@ class Handler(object):
             "generated_images_path" : "/",
             "css_path" : "/dev/null",
             "sass_path" : "/dev/null",
-            "plugins" : self.plugins
+            "plugins" : self.plugins,
+            "imports" : self.imports
         }
         return c
     
