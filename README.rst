@@ -65,7 +65,12 @@ Standalone example:
    env = Environment("/some/path/out", '/media-prefix')
    
    env.config["compass_bin"] = "/path/to/compass/bin"
-   env.config["vendor_path"] = "vendor" #it is relative path prepended in vendor urls 
+   env.config["vendor_path"] = "vendor" #it is relative path prepended in vendor urls
+   
+   #if using zurb_foundation python package
+   env.config["compass_imports"] = [pkg_resources.resource_filename("zurb_foundation", "scss")]
+   #if using zurb-foundation ruby package
+   env.config["compass_plugins"] = {"zurb-foundation":">4"}
    
    env.append_path("/some/path/assets", "/")
    env.append_path("/some/path/vendors", "/vendors")
