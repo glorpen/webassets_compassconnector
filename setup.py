@@ -10,7 +10,7 @@ requires=['webassets']
 
 setup(
     name='webassets_compassconnector',
-    version="0.2.1",
+    version="0.2.2",
     description='Complete Compass integration for Webassets',
     long_description=README,
     author='Arkadiusz Dzięgiel',
