@@ -12,6 +12,14 @@ import time
 import types
 import logging
 
+try:
+    base64_encode = base64.encodebytes
+    base64_decode = base64.decodebytes
+except:
+    base64_encode = base64.encodestring
+    base64_decode = base64.decodestring
+    
+
 class Handler(object):
     
     TYPE_GENERATED_IMAGE = 'generated_image'
@@ -63,7 +71,7 @@ class Handler(object):
         return c
     
     def file_to_dict(self, filepath, data, mtime=None):
-        return {"mtime":mtime if mtime else os.path.getmtime(filepath), "data": base64.encodebytes(data).decode(), "hash": hashlib.md5(filepath.encode()).hexdigest(), "ext": os.path.splitext(filepath)[1][1:]}
+        return {"mtime":mtime if mtime else os.path.getmtime(filepath), "data": base64_encode(data).decode(), "hash": hashlib.md5(filepath.encode()).hexdigest(), "ext": os.path.splitext(filepath)[1][1:]}
     
     def get_path(self, path, mode, type_=None):
         
@@ -103,7 +111,7 @@ class Handler(object):
     def put_file(self, path, type_, data, mode):
         if not isinstance(data, bytes):
             data = data.encode()
-        data = base64.decodebytes(data)
+        data = base64_decode(data)
         
         if path == self.initial_css:
             self.output.write(data.decode())
@@ -163,12 +171,13 @@ class Handler(object):
             command.extend(("-r", i))
         command.append("@%s" % (self.INITIAL_FILE % "scss"))
 
-        with subprocess.Popen(command,
+        proc = subprocess.Popen(command,
             cwd = self.env.directory,
             stdout = subprocess.PIPE,
             stdin = subprocess.PIPE,
             env = {
                 "HOME": os.environ["HOME"]
-            }) as proc:
+            })
             
-            self.run(proc)
+        self.run(proc)
+        proc.wait()
